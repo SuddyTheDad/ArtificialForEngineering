@@ -1,0 +1,131 @@
+# Import necessary libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report
+
+# Load your dataset using an absolute path
+# Replace this with the actual path to your CSV file
+file_path = 'C:/Sudhish_Folders/SwinburneUNI/Studio_Portfolios/venv/Include/Portfolio_Submissions/water_potability.csv'
+
+try:
+    data = pd.read_csv(file_path)
+    print("File loaded successfully!")
+except FileNotFoundError:
+    print(f"Error: The file was not found at the specified path: {file_path}")
+    exit()
+
+# Display the first few rows of the dataset
+print("\nDataset Overview:")
+print(data.head())
+
+# Check how many rows and columns are there
+print("\nShape of the dataset:")
+print(data.shape)
+
+# Display column names and their types
+print("\nColumn Names and Data Types:")
+print(data.dtypes)
+
+# Convert categorical values to numerical values if applicable
+# For example, 'Potability' is already numerical (0, 1), so no conversion needed here
+
+# Data Cleaning
+# Remove duplicate entries
+data = data.drop_duplicates()
+print("\nShape after removing duplicates:")
+print(data.shape)
+
+# Check for missing values
+print("\nMissing Values:")
+print(data.isnull().sum())
+
+# Fill or drop missing values
+# Example: filling missing values with median or mean, or dropping rows
+data['ph'].fillna(data['ph'].median(), inplace=True)
+data['Sulfate'].fillna(data['Sulfate'].median(), inplace=True)
+data['Trihalomethanes'].fillna(data['Trihalomethanes'].median(), inplace=True)
+
+# Check for outliers using boxplots
+for column in data.select_dtypes(include=['float64', 'int64']).columns:
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(data[column])
+    plt.title(f"Box Plot: {column}")
+    plt.show()
+
+# Outliers can be removed if necessary
+# Example: remove outliers based on domain knowledge or z-score
+
+# Summary statistics of all variables
+print("\nSummary Statistics:")
+print(data.describe())
+
+# Identify target variable and predictors
+target_variable = 'Potability'  # Define target variable
+predictors = data.drop(columns=[target_variable]).columns
+
+# Univariate analysis for predictors
+for column in predictors:
+    plt.figure(figsize=(10, 6))
+    sns.histplot(data[column], bins=20, kde=True)
+    plt.title(f"Univariate Analysis: {column}")
+    plt.show()
+
+# Conduct a multivariate analysis
+# Scatter plot for each pair of predictors
+sns.pairplot(data[predictors])
+plt.suptitle("Multivariate Analysis: Pair Plot", y=1.02)
+plt.show()
+
+# Identify pairwise correlations among the variables and plot them in a heatmap
+correlation_matrix = data.corr()
+plt.figure(figsize=(12, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Matrix Heatmap")
+plt.show()
+
+# Feature Engineering
+data['Chloramines_Sulfate'] = data['Chloramines'] * data['Sulfate']
+
+# Normalizing numerical features
+scaler = StandardScaler()
+data[['ph', 'Hardness', 'Solids', 'Chloramines', 'Sulfate', 'Conductivity', 'Organic_carbon', 'Trihalomethanes', 'Turbidity']] = scaler.fit_transform(
+    data[['ph', 'Hardness', 'Solids', 'Chloramines', 'Sulfate', 'Conductivity', 'Organic_carbon', 'Trihalomethanes', 'Turbidity']]
+)
+
+# Feature selection
+X = data.drop(columns=[target_variable])
+y = data[target_variable]
+selector = SelectKBest(score_func=f_classif, k='all')
+selector.fit(X, y)
+scores = pd.DataFrame({'Feature': X.columns, 'Score': selector.scores_})
+print("\nFeature Selection Scores:")
+print(scores.sort_values(by='Score', ascending=False))
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Train and evaluate decision tree models with different feature sets
+
+# Example model training and evaluation
+model = DecisionTreeClassifier()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+print("\nDecision Tree Model Performance:")
+print(classification_report(y_test, y_pred))
+
+# Create a comparison table for different feature sets
+# Placeholder values; replace with actual model results
+results = pd.DataFrame({
+    'Feature Set': ['All Features', 'Reduced Features', 'Selected Features'],
+    'Accuracy': [0.85, 0.80, 0.83],
+    'Precision': [0.82, 0.78, 0.80],
+    'Recall': [0.87, 0.81, 0.84],
+    'F1-Score': [0.84, 0.79, 0.82]
+})
+print("\nComparison Table:")
+print(results)

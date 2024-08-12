@@ -1,0 +1,114 @@
+# Import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report, accuracy_score
+from tabulate import tabulate
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load and preprocess data
+def load_and_preprocess_data(file_path):
+    data = pd.read_csv(file_path)
+    data = data.drop_duplicates()
+    data = data.fillna(method='ffill')  # Forward fill missing values
+    return data
+
+# Feature Engineering
+def get_feature_sets():
+    return {
+        'Set 1': ['Hardness', 'Solids', 'Chloramines', 'Sulfate'],
+        'Set 2': ['Hardness', 'Conductivity', 'Organic_carbon', 'Turbidity'],
+        'Set 3': ['Chloramines', 'Sulfate', 'Trihalomethanes', 'Turbidity'],
+        'Set 4': ['Solids', 'Sulfate', 'Conductivity', 'Organic_carbon', 'Trihalomethanes'],
+        'Set 5': ['ph', 'Hardness', 'Chloramines', 'Sulfate', 'Conductivity']
+    }
+
+# Main function for testing models
+def test_decision_tree_models(data):
+    features = get_feature_sets()
+    results = []
+
+    for set_name, feature_set in features.items():
+        X = data[feature_set]
+        y = data['Potability']
+        
+        # Split data
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        
+        # Train model
+        model = DecisionTreeClassifier(random_state=42)
+        model.fit(X_train, y_train)
+        
+        # Predict
+        y_pred = model.predict(X_test)
+        
+        # Evaluate
+        accuracy = accuracy_score(y_test, y_pred)
+        report = classification_report(y_test, y_pred, output_dict=True)
+        
+        # Extract metrics
+        precision_0 = report['0']['precision']
+        recall_0 = report['0']['recall']
+        f1_0 = report['0']['f1-score']
+        
+        precision_1 = report['1']['precision']
+        recall_1 = report['1']['recall']
+        f1_1 = report['1']['f1-score']
+        
+        # Store results
+        results.append({
+            'Feature Set': set_name,
+            'Accuracy': accuracy,
+            'Precision (0)': precision_0,
+            'Recall (0)': recall_0,
+            'F1-score (0)': f1_0,
+            'Precision (1)': precision_1,
+            'Recall (1)': recall_1,
+            'F1-score (1)': f1_1
+        })
+
+    # Create DataFrame and print comparison table
+    results_df = pd.DataFrame(results)
+    print(tabulate(results_df, headers='keys', tablefmt='pretty'))
+
+    # Optionally, save the results to a CSV file
+    results_df.to_csv('decision_tree_comparison.csv', index=False)
+
+# Visualization functions
+def plot_summary_statistics(data):
+    print("\nSummary Statistics:")
+    print(data.describe())
+
+    # Boxplots for numerical features
+    for column in data.select_dtypes(include=['float64', 'int64']).columns:
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(data[column])
+        plt.title(f"Box Plot: {column}")
+        plt.show()
+
+    # Pairplot for multivariate analysis
+    predictors = data.columns.difference(['Potability'])
+    sns.pairplot(data[predictors])
+    plt.suptitle("Multivariate Analysis: Pair Plot", y=1.02)
+    plt.show()
+
+    # Correlation matrix heatmap
+    correlation_matrix = data.corr()
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+    plt.title("Correlation Matrix Heatmap")
+    plt.show()
+
+# Main execution
+if __name__ == "__main__":
+    file_path = 'C:/Sudhish_Folders/SwinburneUNI/Studio_Portfolios/venv/Include/Portfolio_Submissions/water_potability.csv'
+    
+    # Load and preprocess data
+    data = load_and_preprocess_data(file_path)
+    
+    # Plot summary statistics and visualizations
+    plot_summary_statistics(data)
+    
+    # Test Decision Tree models with different feature sets
+    test_decision_tree_models(data)
