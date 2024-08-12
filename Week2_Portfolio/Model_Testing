@@ -75,40 +75,12 @@ def test_decision_tree_models(data):
     # Optionally, save the results to a CSV file
     results_df.to_csv('decision_tree_comparison.csv', index=False)
 
-# Visualization functions
-def plot_summary_statistics(data):
-    print("\nSummary Statistics:")
-    print(data.describe())
-
-    # Boxplots for numerical features
-    for column in data.select_dtypes(include=['float64', 'int64']).columns:
-        plt.figure(figsize=(10, 6))
-        sns.boxplot(data[column])
-        plt.title(f"Box Plot: {column}")
-        plt.show()
-
-    # Pairplot for multivariate analysis
-    predictors = data.columns.difference(['Potability'])
-    sns.pairplot(data[predictors])
-    plt.suptitle("Multivariate Analysis: Pair Plot", y=1.02)
-    plt.show()
-
-    # Correlation matrix heatmap
-    correlation_matrix = data.corr()
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
-    plt.title("Correlation Matrix Heatmap")
-    plt.show()
-
 # Main execution
 if __name__ == "__main__":
     file_path = 'C:/Sudhish_Folders/SwinburneUNI/Studio_Portfolios/venv/Include/Portfolio_Submissions/water_potability.csv'
     
     # Load and preprocess data
     data = load_and_preprocess_data(file_path)
-    
-    # Plot summary statistics and visualizations
-    plot_summary_statistics(data)
     
     # Test Decision Tree models with different feature sets
     test_decision_tree_models(data)
