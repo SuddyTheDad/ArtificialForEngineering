@@ -1,0 +1,30 @@
+import pandas as pd
+
+# Load the datasets
+df_boning = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week3_sub\ampc2\boning.csv')
+df_slicing = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week3_sub\ampc2\slicing.csv')
+
+# Selecting relevant columns for student number ending with 0
+columns_to_select = [
+    'Frame',  
+    'Neck x', 'Neck y', 'Neck z',  
+    'Head x', 'Head y', 'Head z' 
+]
+
+# Extract relevant columns
+df_boning_selected = df_boning[columns_to_select].copy()  # Use .copy() to avoid the warning
+df_slicing_selected = df_slicing[columns_to_select].copy()  # Use .copy() to avoid the warning
+
+# Add class labels using .loc to avoid SettingWithCopyWarning
+df_boning_selected.loc[:, 'class'] = 0  # Class label for boning
+df_slicing_selected.loc[:, 'class'] = 1  # Class label for slicing
+
+# Combine the DataFrames
+combined_df = pd.concat([df_boning_selected, df_slicing_selected], ignore_index=True)
+
+# Inspect the combined DataFrame
+print(combined_df.head())
+print(combined_df.info())
+
+# Optionally, save the combined DataFrame to a new CSV file
+combined_df.to_csv('combined_data.csv', index=False)
