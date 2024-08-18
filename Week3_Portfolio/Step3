@@ -1,0 +1,54 @@
+import pandas as pd
+import numpy as np
+from scipy.integrate import simpson
+from scipy.signal import find_peaks
+
+# Load your data into a DataFrame
+df = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week3_sub\ampc2\combined_data_with_composites.csv')
+
+# Create a new DataFrame to hold the computed features
+features = pd.DataFrame()
+
+# Function to compute features for each group
+def compute_features(group):
+    return pd.Series({
+        'Mean': group.mean(),
+        'Std': group.std(),
+        'Min': group.min(),
+        'Max': group.max(),
+        'AUC': simpson(group, dx=1),  # Use simpson for AUC
+        'Peaks': find_peaks(group)[0].size
+    })
+
+# Iterate through each relevant column (2 to 19)
+for col in df.columns[1:-1]:  # Exclude Frame and class
+    # Group the DataFrame into 60-frame segments
+    col_features = df[col].groupby(df.index // 60).apply(compute_features)
+    
+    # Convert the Series to a DataFrame
+    col_features = col_features.unstack()  # Unstack the Series to get a DataFrame
+    
+    # Rename the columns to indicate which statistic they represent
+    col_features.columns = [f'{col}_{stat}' for stat in col_features.columns]
+    
+    # Concatenate the computed features to the main features DataFrame
+    features = pd.concat([features, col_features], axis=1)
+
+# Reset index to avoid confusion with frame number
+features.reset_index(drop=True, inplace=True)
+
+# Add the class labels (0 or 1) for each minute
+class_labels = df['class'].groupby(df.index // 60).first().reset_index(drop=True)  # Take the first class label for each group
+
+# Now class_labels should have the correct length matching features
+# Check if class_labels has the same length as features
+if len(class_labels) == len(features):
+    features['class'] = class_labels
+else:
+    print(f'Warning: Length mismatch! Features length: {len(features)}, Class labels length: {len(class_labels)}')
+
+# Save the features DataFrame to a CSV file
+features.to_csv('features_dataset.csv', index=False)
+
+# Display the new DataFrame with statistical features
+print(features)

@@ -1,0 +1,29 @@
+import pandas as pd
+import numpy as np
+
+# Step 2: Load the combined dataset
+combined_df  = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week3_sub\ampc2\combined_data.csv')
+
+
+# Create composite columns for the Neck set
+combined_df['RMS_Neck_xy'] = np.sqrt((combined_df['Neck x']**2 + combined_df['Neck y']**2) / 2)
+combined_df['RMS_Neck_yz'] = np.sqrt((combined_df['Neck y']**2 + combined_df['Neck z']**2) / 2)
+combined_df['RMS_Neck_zx'] = np.sqrt((combined_df['Neck z']**2 + combined_df['Neck x']**2) / 2)
+combined_df['RMS_Neck_xyz'] = np.sqrt((combined_df['Neck x']**2 + combined_df['Neck y']**2 + combined_df['Neck z']**2) / 3)
+combined_df['Roll_Neck'] = 180 * np.arctan2(combined_df['Neck y'], np.sqrt(combined_df['Neck x']**2 + combined_df['Neck z']**2)) / np.pi
+combined_df['Pitch_Neck'] = 180 * np.arctan2(combined_df['Neck x'], np.sqrt(combined_df['Neck y']**2 + combined_df['Neck z']**2)) / np.pi
+
+# Create composite columns for the Head set
+combined_df['RMS_Head_xy'] = np.sqrt((combined_df['Head x']**2 + combined_df['Head y']**2) / 2)
+combined_df['RMS_Head_yz'] = np.sqrt((combined_df['Head y']**2 + combined_df['Head z']**2) / 2)
+combined_df['RMS_Head_zx'] = np.sqrt((combined_df['Head z']**2 + combined_df['Head x']**2) / 2)
+combined_df['RMS_Head_xyz'] = np.sqrt((combined_df['Head x']**2 + combined_df['Head y']**2 + combined_df['Head z']**2) / 3)
+combined_df['Roll_Head'] = 180 * np.arctan2(combined_df['Head y'], np.sqrt(combined_df['Head x']**2 + combined_df['Head z']**2)) / np.pi
+combined_df['Pitch_Head'] = 180 * np.arctan2(combined_df['Head x'], np.sqrt(combined_df['Head y']**2 + combined_df['Head z']**2)) / np.pi
+
+# Inspect the updated DataFrame
+print(combined_df.head())
+print(combined_df.info())
+
+# Optionally, save the updated DataFrame to a new CSV file
+combined_df.to_csv('combined_data_with_composites.csv', index=False)

@@ -1,0 +1,155 @@
+import pandas as pd
+import numpy as np
+from sklearn import svm
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.decomposition import PCA
+from sklearn.linear_model import SGDClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score
+
+# Load your dataset
+features = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week3_sub\ampc2\features_dataset.csv')
+
+# Prepare data
+X = features.drop('class', axis=1)
+y = features['class']
+
+# Identify and drop constant features
+constant_features = X.columns[X.nunique() <= 1]
+print("Constant features:", constant_features)
+X = X.drop(columns=constant_features)
+
+# Train-Test Split (70/30)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+
+# Train SVM Model with Hyperparameter Tuning
+param_grid = {'C': [0.1, 1, 10], 'kernel': ['linear', 'rbf']}
+grid_search = GridSearchCV(svm.SVC(), param_grid, cv=10)
+grid_search.fit(X_train, y_train)
+
+# Best parameters
+best_params = grid_search.best_params_
+print("Best Parameters:", best_params)
+
+# Train with best parameters
+clf_best = svm.SVC(**best_params)
+clf_best.fit(X_train, y_train)
+
+# Train-Test Split Accuracy
+y_pred_test = clf_best.predict(X_test)
+train_test_accuracy = accuracy_score(y_test, y_pred_test)
+
+# Cross-validation accuracy
+cv_scores = cross_val_score(clf_best, X, y, cv=10)
+mean_cv_accuracy = np.mean(cv_scores)
+
+# Feature Selection using SelectKBest
+selector = SelectKBest(score_func=f_classif, k=10)
+X_best_features = selector.fit_transform(X, y)
+
+# Train-Test Split with 10 Best Features
+X_train_best, X_test_best, y_train_best, y_test_best = train_test_split(X_best_features, y, test_size=0.3, random_state=1)
+
+# Train SVM with Hyperparameter Tuning on 10 Best Features
+grid_search_best_features = GridSearchCV(svm.SVC(), param_grid, cv=10)
+grid_search_best_features.fit(X_train_best, y_train_best)
+
+best_params_best_features = grid_search_best_features.best_params_
+print("Best Parameters with 10 Best Features:", best_params_best_features)
+
+clf_best_features = svm.SVC(**best_params_best_features)
+clf_best_features.fit(X_train_best, y_train_best)
+
+# Train-Test Split Accuracy with Best Features
+y_pred_test_best = clf_best_features.predict(X_test_best)
+train_test_accuracy_best_features = accuracy_score(y_test_best, y_pred_test_best)
+
+# Cross-validation accuracy with best features
+cv_scores_best_features = cross_val_score(clf_best_features, X_best_features, y, cv=10)
+mean_cv_accuracy_best_features = np.mean(cv_scores_best_features)
+
+# PCA with Hyperparameter Tuning
+pca = PCA(n_components=10)  # You can adjust the number of components
+X_pca = pca.fit_transform(X)
+
+# Train-Test Split with PCA
+X_train_pca, X_test_pca, y_train_pca, y_test_pca = train_test_split(X_pca, y, test_size=0.3, random_state=1)
+
+# Hyperparameter tuning on PCA features
+grid_search_pca = GridSearchCV(svm.SVC(), param_grid, cv=10)
+grid_search_pca.fit(X_train_pca, y_train_pca)
+
+# Best parameters for PCA
+best_params_pca = grid_search_pca.best_params_
+print("Best Parameters with PCA:", best_params_pca)
+
+clf_pca = svm.SVC(**best_params_pca)
+clf_pca.fit(X_train_pca, y_train_pca)
+
+# Train-Test Split Accuracy with PCA
+y_pred_pca = clf_pca.predict(X_test_pca)
+train_test_accuracy_pca = accuracy_score(y_test_pca, y_pred_pca)
+
+# Cross-validation accuracy with PCA
+cv_scores_pca = cross_val_score(clf_pca, X_pca, y, cv=10)
+mean_cv_accuracy_pca = np.mean(cv_scores_pca)
+
+# Create Summary Table for SVM Models
+summary_table_svm = {
+    'Model': [
+        'SVM with Original Features',
+        'SVM with Hyperparameter Tuning',
+        'SVM with Feature Selection and Hyperparameter Tuning',
+        'SVM with PCA and Hyperparameter Tuning'
+    ],
+    'Train-Test Split Accuracy': [
+        train_test_accuracy,
+        train_test_accuracy,
+        train_test_accuracy_best_features,
+        train_test_accuracy_pca
+    ],
+    'Cross Validation Accuracy': [
+        mean_cv_accuracy,
+        mean_cv_accuracy,
+        mean_cv_accuracy_best_features,
+        mean_cv_accuracy_pca
+    ]
+}
+
+summary_df_svm = pd.DataFrame(summary_table_svm)
+print("Summary Table for SVM Models:")
+print(summary_df_svm)
+
+# Train Additional Classifiers
+summary_table_classifiers = {'Model': [], 'Train-Test Split Accuracy': [], 'Cross Validation Accuracy': []}
+
+# Classifiers
+models = {
+    'SGD': SGDClassifier(),
+    'RandomForest': RandomForestClassifier(),
+    'MLP': MLPClassifier(max_iter=1000)
+}
+
+for model_name, model in models.items():
+    # Train-Test Split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+    
+    # Train and evaluate with Train-Test Split
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    train_test_accuracy = accuracy_score(y_test, y_pred)
+    
+    # Cross-validation accuracy
+    cv_scores = cross_val_score(model, X, y, cv=10)
+    mean_cv_accuracy = np.mean(cv_scores)
+
+    # Append to summary table
+    summary_table_classifiers['Model'].append(model_name)
+    summary_table_classifiers['Train-Test Split Accuracy'].append(train_test_accuracy)
+    summary_table_classifiers['Cross Validation Accuracy'].append(mean_cv_accuracy)
+
+summary_df_classifiers = pd.DataFrame(summary_table_classifiers)
+print("Summary Table for Additional Classifiers:")
+print(summary_df_classifiers)
