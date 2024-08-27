@@ -1,0 +1,71 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import VarianceThreshold, SelectFromModel
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
+import joblib
+
+# Load the preprocessed training data from Step 1
+remaining_data = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week4_sub\training_data.csv')
+
+# Feature Selection
+selector = VarianceThreshold(threshold=0.1)
+selected_features = selector.fit_transform(remaining_data.drop(columns='Class'))
+
+clf = RandomForestClassifier()
+clf.fit(selected_features, remaining_data['Class'])
+model_selector = SelectFromModel(clf, prefit=True)
+selected_features = model_selector.transform(selected_features)
+
+# Split the data
+X_train, X_val, y_train, y_val = train_test_split(selected_features, remaining_data['Class'], test_size=0.3, random_state=42)
+
+# Scale the data
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_val = scaler.transform(X_val)
+
+# Initialize models
+models = {
+    'Decision Tree': DecisionTreeClassifier(),
+    'Logistic Regression': LogisticRegression(max_iter=2000),  # Increased max_iter
+    'SVM': SVC(class_weight='balanced'),  # Added class weighting
+    'Random Forest': RandomForestClassifier(),
+    'Gradient Boosting': GradientBoostingClassifier(),
+    'KNN': KNeighborsClassifier()
+}
+
+# Train and evaluate each model
+comparison_table = pd.DataFrame(columns=['Model', 'Accuracy', 'Precision', 'Recall', 'F1-Score'])
+
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_val)
+    
+    print(f"Evaluation for {name}:")
+    report = classification_report(y_val, y_pred, output_dict=True)
+    print(classification_report(y_val, y_pred))
+    print(confusion_matrix(y_val, y_pred))
+    print("\n")
+    
+    new_row = pd.DataFrame({
+        'Model': [name],
+        'Accuracy': [report['accuracy']],
+        'Precision': [report['weighted avg']['precision']],
+        'Recall': [report['weighted avg']['recall']],
+        'F1-Score': [report['weighted avg']['f1-score']]
+    })
+    comparison_table = pd.concat([comparison_table, new_row], ignore_index=True)
+
+# Display the comparison table
+print(comparison_table)
+
+# Save the best model (e.g., Random Forest)
+best_model = models['Random Forest']  # Replace with your selected model's name
+joblib.dump(best_model, 'best_model.pkl')
+print("Best model saved as 'best_model.pkl'")

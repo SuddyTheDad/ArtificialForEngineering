@@ -1,0 +1,4 @@
+Defined Rules:
+For Class 0: FFTE Production solids SP < 39.5
+For Class 1: FFTE Production solids SP >= 39.5 and FFTE Production solids SP < 42
+For Class 2: FFTE Production solids SP >= 42

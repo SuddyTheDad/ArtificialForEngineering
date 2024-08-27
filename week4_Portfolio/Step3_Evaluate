@@ -1,0 +1,45 @@
+import pandas as pd
+from sklearn.metrics import classification_report, confusion_matrix
+import joblib
+
+test_data = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week4_sub\test_data.csv')
+
+# Separate features and labels
+X_test = test_data.drop(columns='Class')
+y_test = test_data['Class']
+
+best_model = joblib.load('best_model.pkl')
+
+
+y_pred_best_model = best_model.predict(X_test)
+
+print("Evaluation for Best Model:")
+print(classification_report(y_test, y_pred_best_model))
+print(confusion_matrix(y_test, y_pred_best_model))
+
+best_model_performance = classification_report(y_test, y_pred_best_model, output_dict=True)
+
+models = ['decision_tree.pkl', 'logistic_regression.pkl', 'svm.pkl', 'random_forest.pkl', 'gradient_boosting.pkl', 'knn.pkl']
+model_names = ['Decision Tree', 'Logistic Regression', 'SVM', 'Random Forest', 'Gradient Boosting', 'KNN']
+
+# Dictionary to store performance results
+performance_results = {}
+
+for model_file, model_name in zip(models, model_names):
+    model = joblib.load(model_file)
+    y_pred = model.predict(X_test)
+    print(f"Evaluation for {model_name}:")
+    print(classification_report(y_test, y_pred))
+    print(confusion_matrix(y_test, y_pred))
+    
+    # Save performance metrics
+    performance_results[model_name] = classification_report(y_test, y_pred, output_dict=True)
+
+# Print the summary of performance results
+for model_name, metrics in performance_results.items():
+    print(f"{model_name} Performance:")
+    print(f"Accuracy: {metrics['accuracy']}")
+    print(f"Precision: {metrics['weighted avg']['precision']}")
+    print(f"Recall: {metrics['weighted avg']['recall']}")
+    print(f"F1-Score: {metrics['weighted avg']['f1-score']}")
+    print("-" * 30)

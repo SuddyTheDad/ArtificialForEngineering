@@ -1,0 +1,49 @@
+import pandas as pd
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score
+
+# Load the dataset
+data = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week4_sub\vegemite.csv')
+
+# Select only SP features for the model
+X = data.filter(like='SP')  # Selecting features that end with 'SP'
+y = data['Class']
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Train the Decision Tree model
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+
+# Predict on the test set
+y_pred = dt_model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.2f}')
+print(classification_report(y_test, y_pred))
+
+# Print the decision tree rules
+tree_rules = export_text(dt_model, feature_names=list(X.columns))
+print(tree_rules)
+
+# Define the rules based on the output from the decision tree
+rules = {
+    'Class 0': 'FFTE Production solids SP < 39.5',
+    'Class 1': 'FFTE Production solids SP >= 39.5 and FFTE Production solids SP < 42',
+    'Class 2': 'FFTE Production solids SP >= 42'
+}
+
+# Print the defined rules
+print("\nDefined Rules:")
+for class_value, rule in rules.items():
+    print(f'For {class_value}: {rule}')
+
+# Optionally, save the rules to a file
+with open('decision_tree_rules.txt', 'w') as f:
+    f.write("Defined Rules:\n")
+    for class_value, rule in rules.items():
+        f.write(f'For {class_value}: {rule}\n')

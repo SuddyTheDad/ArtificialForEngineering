@@ -1,0 +1,50 @@
+import pandas as pd
+
+# Load the dataset
+file_path = 'your_path_to_vegemite.csv'
+vegemite_data = pd.read_csv(r'C:\Sudhish_Folders\SwinburneUNI\Studio_Portfolios\venv\Include\Portfolio_Submissions\Week4_sub\vegemite.csv')
+
+# Shuffle the dataset
+shuffled_data = vegemite_data.sample(frac=1, random_state=42).reset_index(drop=True)
+
+# Randomly select 1000 data points with near-equal class distribution
+test_samples_per_class = [300, 300, 400]  # Exact distribution for a total of 1000 samples
+class_0_data = shuffled_data[shuffled_data['Class'] == 0].sample(n=test_samples_per_class[0], random_state=42)
+class_1_data = shuffled_data[shuffled_data['Class'] == 1].sample(n=test_samples_per_class[1], random_state=42)
+class_2_data = shuffled_data[shuffled_data['Class'] == 2].sample(n=test_samples_per_class[2], random_state=42)
+
+# Combine them to form the test dataset
+test_data = pd.concat([class_0_data, class_1_data, class_2_data])
+
+# Use the remaining data for training
+remaining_data = shuffled_data.drop(test_data.index)
+
+# Feature Construction:
+# 1) Check for and remove constant value columns
+constant_columns = [col for col in remaining_data.columns if remaining_data[col].nunique() == 1]
+remaining_data = remaining_data.drop(columns=constant_columns)
+
+# 2) Identify columns with few integer values and convert them to categorical features
+few_value_columns = [col for col in remaining_data.columns if remaining_data[col].dtype == 'int64' and remaining_data[col].nunique() <= 10]
+remaining_data[few_value_columns] = remaining_data[few_value_columns].astype('category')
+
+# 3) Assess class balance in the training data
+train_class_distribution = remaining_data['Class'].value_counts()
+
+# 4) Explore and add composite features if applicable
+# This step requires domain knowledge or exploratory data analysis to identify potential composite features
+
+# 5) Determine the number of features in the final dataset
+final_feature_count = remaining_data.shape[1]
+
+# Print the results
+print("Constant columns removed:", constant_columns)
+print("Converted to categorical columns:", few_value_columns)
+print("Class distribution in training data:\n", train_class_distribution)
+print("Number of features in the final dataset:", final_feature_count)
+
+# Save the training and test datasets to CSV if needed
+remaining_data.to_csv('training_data.csv', index=False)
+test_data.to_csv('test_data.csv', index=False)
+
+
